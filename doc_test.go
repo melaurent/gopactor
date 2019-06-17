@@ -2,8 +2,6 @@ package gopactor
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/AsynkronIT/protoactor-go/actor"
 )
 
@@ -15,11 +13,7 @@ func ExampleSpawnFromInstance() {
 	ctx := actor.EmptyRootContext
 
 	// Given that the Worker actor is defined elsewhere
-	worker, err := SpawnFromProducer(func () actor.Actor { return &Worker{} })
-	if err != nil {
-		log.Print("Failed to spawn a worker")
-		return
-	}
+	worker := SpawnFromProducer(func () actor.Actor { return &Worker{} })
 
 	ctx.Send(worker, "Hello, world!")
 }
@@ -31,7 +25,7 @@ func ExampleSpawnFromProducer() {
 		return &Worker{}
 	}
 
-	worker, _ := SpawnFromProducer(producer)
+	worker := SpawnFromProducer(producer)
 	ctx.Send(worker, "Hello, world!")
 }
 
@@ -44,7 +38,7 @@ func ExampleSpawnFromFunc() {
 		}
 	}
 
-	worker, _ := SpawnFromFunc(f)
+	worker := SpawnFromFunc(f)
 
 	ctx.Send(worker,"Hello, world!")
 	ShouldReceiveSomething(worker)
@@ -54,8 +48,8 @@ func ExampleSpawnFromFunc() {
 func ExampleSpawnNullActor() {
 	ctx := actor.EmptyRootContext
 
-	worker, _ := SpawnFromProducer(func () actor.Actor { return &Worker{} })
-	requestor, _ := SpawnNullActor()
+	worker := SpawnFromProducer(func () actor.Actor { return &Worker{} })
+	requestor := SpawnNullActor()
 
 	ctx.RequestWithCustomSender(worker, "ping", requestor)
 }

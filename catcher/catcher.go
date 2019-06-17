@@ -56,7 +56,7 @@ func New() *Catcher {
 }
 
 // Spawn an actor with injected middleware.
-func (catcher *Catcher) Spawn(context *actor.RootContext, props *actor.Props, opts ...options.Options) (*actor.PID, error) {
+func (catcher *Catcher) Spawn(context *actor.RootContext, props *actor.Props, opts ...options.Options) *actor.PID {
 	var opt options.Options
 	if len(opts) == 0 {
 		opt = options.OptDefault
@@ -79,7 +79,7 @@ func (catcher *Catcher) Spawn(context *actor.RootContext, props *actor.Props, op
 	pid := context.SpawnPrefix(props, opt.Prefix)
 
 	catcher.AssignedActor = pid
-	return pid, nil
+	return pid
 }
 
 func (catcher *Catcher) ShouldReceive(sender *actor.PID, msg interface{}) string {

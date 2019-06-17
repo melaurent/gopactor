@@ -12,7 +12,7 @@ func TestShouldReceive(t *testing.T) {
 	a := assert.New(t)
 	ctx := actor.EmptyRootContext
 
-	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
+	receiver := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
 
 	// Wrong params
 	a.Contains(ShouldReceive(nil), "not an actor PID")
@@ -41,7 +41,7 @@ func TestShouldReceiveSomething(t *testing.T) {
 	a := assert.New(t)
 	ctx := actor.EmptyRootContext
 
-	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
+	receiver := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
 
 	// Wrong params
 	a.Contains(ShouldReceiveSomething(nil), "not an actor PID")
@@ -61,9 +61,9 @@ func TestShouldReceiveFrom(t *testing.T) {
 	a := assert.New(t)
 	ctx := actor.EmptyRootContext
 
-	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
-	teller, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("tel"))
-	requestor, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("req"))
+	receiver := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
+	teller := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("tel"))
+	requestor := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("req"))
 
 	// Wrong params
 	a.Contains(ShouldReceiveFrom(nil), "not an actor PID")
@@ -104,7 +104,7 @@ func TestShouldReceiveN(t *testing.T) {
 	a := assert.New(t)
 	ctx := actor.EmptyRootContext
 
-	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
+	receiver := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
 
 	// Wrong params
 	a.Contains(ShouldReceiveN(nil), "not an actor PID")
@@ -140,7 +140,7 @@ func TestShouldSend(t *testing.T) {
 	ctx := actor.EmptyRootContext
 
 	receiver := ctx.SpawnPrefix(actor.PropsFromFunc(func(ctx actor.Context) {}), "rcv")
-	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
+	sender := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
@@ -187,7 +187,7 @@ func TestShouldSendTo(t *testing.T) {
 	ctx := actor.EmptyRootContext
 
 	receiver := ctx.SpawnPrefix(actor.PropsFromFunc(func(ctx actor.Context) {}), "rcv")
-	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
+	sender := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
@@ -240,7 +240,7 @@ func TestShouldSendSomething(t *testing.T) {
 	ctx := actor.EmptyRootContext
 
 	receiver := ctx.SpawnPrefix(actor.PropsFromFunc(func(ctx actor.Context) {}), "rcv")
-	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
+	sender := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
@@ -274,7 +274,7 @@ func TestShouldSendN(t *testing.T) {
 	ctx := actor.EmptyRootContext
 
 	receiver := ctx.SpawnPrefix(actor.PropsFromFunc(func(ctx actor.Context) {}), "rcv")
-	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
+	sender := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
@@ -321,8 +321,8 @@ func TestShouldNotSendOrReceive(t *testing.T) {
 	a := assert.New(t)
 	ctx := actor.EmptyRootContext
 
-	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
-	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
+	receiver := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
+	sender := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
@@ -358,7 +358,7 @@ func TestShouldNotSendOrReceive(t *testing.T) {
 func TestShouldStart(t *testing.T) {
 	a := assert.New(t)
 
-	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptNoInterception.WithSystemInterception().WithPrefix("rcv"))
+	receiver := SpawnFromFunc(func(ctx actor.Context) {}, OptNoInterception.WithSystemInterception().WithPrefix("rcv"))
 
 	// Wrong params
 	a.Contains(ShouldStart(nil), "not an actor PID")
@@ -373,7 +373,7 @@ func TestShouldStart(t *testing.T) {
 func TestShouldStop(t *testing.T) {
 	a := assert.New(t)
 
-	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptNoInterception.WithSystemInterception().WithPrefix("rcv"))
+	receiver := SpawnFromFunc(func(ctx actor.Context) {}, OptNoInterception.WithSystemInterception().WithPrefix("rcv"))
 
 	// Wrong params
 	a.Contains(ShouldStop(nil), "not an actor PID")
@@ -393,7 +393,7 @@ func TestShouldBeRestarting(t *testing.T) {
 	a := assert.New(t)
 	ctx := actor.EmptyRootContext
 
-	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {
+	receiver := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "panic" {
@@ -425,7 +425,7 @@ func TestShouldObserveTermination(t *testing.T) {
 	getParentChildSet := func() (*actor.PID, *actor.PID) {
 		var child *actor.PID
 		wait := make(chan bool)
-		parent, _ := SpawnFromFunc(func(ctx actor.Context) {
+		parent := SpawnFromFunc(func(ctx actor.Context) {
 			switch ctx.Message().(type) {
 			case *actor.Started:
 				child = ctx.SpawnPrefix(childProps, "child")
@@ -438,7 +438,7 @@ func TestShouldObserveTermination(t *testing.T) {
 		return parent, child
 	}
 
-	someActor, _ := SpawnNullActor()
+	someActor := SpawnNullActor()
 
 	// Wrong params
 	parent1, child1 := getParentChildSet()
@@ -470,9 +470,9 @@ func TestShouldSpawn(t *testing.T) {
 	a := assert.New(t)
 	ctx := actor.EmptyRootContext
 
-	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptNoInterception.WithPrefix("rcv"))
+	receiver := SpawnFromFunc(func(ctx actor.Context) {}, OptNoInterception.WithPrefix("rcv"))
 	childProps := actor.PropsFromFunc(func(ctx actor.Context) {})
-	parent, _ := SpawnFromFunc(func(ctx actor.Context) {
+	parent := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "spawn" && ctx.Sender() != nil {

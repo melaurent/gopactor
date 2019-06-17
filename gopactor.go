@@ -7,19 +7,19 @@ import (
 )
 
 // Analog of Protoactor's actor.SpawnPrefix(actor.FromProducer(...))
-func SpawnFromProducer(producer actor.Producer, opts ...options.Options) (*actor.PID, error) {
+func SpawnFromProducer(producer actor.Producer, opts ...options.Options) *actor.PID {
 	return gopactor.DEFAULT_GOPACTOR.SpawnFromProducer(producer, opts...)
 }
 
 // Analog of Protoactor's actor.SpawnPrefix(actor.FromFunc(...))
-func SpawnFromFunc(f actor.ActorFunc, opts ...options.Options) (*actor.PID, error) {
+func SpawnFromFunc(f actor.ActorFunc, opts ...options.Options) *actor.PID {
 	return gopactor.DEFAULT_GOPACTOR.SpawnFromFunc(f, opts...)
 }
 
 // Spawn an actor that does nothing.
 // It can be very useful in tests when all you need is an actor
 // that can play a role of a message sender and a black-hole receiver.
-func SpawnNullActor(opts ...options.Options) (*actor.PID, error) {
+func SpawnNullActor(opts ...options.Options) *actor.PID {
 	return gopactor.DEFAULT_GOPACTOR.SpawnNullActor(opts...)
 }
 
