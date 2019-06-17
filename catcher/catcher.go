@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/meamidos/gopactor/options"
+	"github.com/melaurent/gopactor/options"
 )
 
 // Envelope is a wrapper that is used for all intercepted messages
@@ -56,7 +56,7 @@ func New() *Catcher {
 }
 
 // Spawn an actor with injected middleware.
-func (catcher *Catcher) Spawn(props *actor.Props, opts ...options.Options) (*actor.PID, error) {
+func (catcher *Catcher) Spawn(context *actor.RootContext, props *actor.Props, opts ...options.Options) (*actor.PID, error) {
 	var opt options.Options
 	if len(opts) == 0 {
 		opt = options.OptDefault
@@ -66,18 +66,17 @@ func (catcher *Catcher) Spawn(props *actor.Props, opts ...options.Options) (*act
 
 	catcher.Options = opt
 
+	props = props.WithContextDecorator(catcher.contextDecorator)
+
 	if opt.InboundInterceptionEnabled || opt.SystemInterceptionEnabled || opt.SpawnInterceptionEnabled || opt.DummySpawningEnabled {
-		props = props.WithMiddleware(catcher.inboundMiddleware)
+		props = props.WithReceiverMiddleware(catcher.inboundMiddleware)
 	}
 
 	if opt.OutboundInterceptionEnabled {
-		props = props.WithOutboundMiddleware(catcher.outboundMiddleware)
+		props = props.WithSenderMiddleware(catcher.outboundMiddleware)
 	}
 
-	pid, err := actor.SpawnPrefix(props, opt.Prefix)
-	if err != nil {
-		return nil, err
-	}
+	pid := context.SpawnPrefix(props, opt.Prefix)
 
 	catcher.AssignedActor = pid
 	return pid, nil

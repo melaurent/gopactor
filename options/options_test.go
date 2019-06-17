@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/meamidos/gopactor/options"
+	"github.com/melaurent/gopactor/options"
 	"github.com/stretchr/testify/assert"
 )
 

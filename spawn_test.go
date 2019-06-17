@@ -14,8 +14,7 @@ func (ta *TestActor) Receive(ctx actor.Context) {}
 func TestSpawnFromInstance(t *testing.T) {
 	a := assert.New(t)
 
-	ta := &TestActor{}
-	_, err := SpawnFromInstance(ta)
+	_, err := SpawnFromProducer(func () actor.Actor { return &TestActor{}} )
 	a.Nil(err)
 
 	// Cleanup
@@ -25,8 +24,10 @@ func TestSpawnFromInstance(t *testing.T) {
 func TestSpawnFromInstance_WithPrefix(t *testing.T) {
 	a := assert.New(t)
 
-	ta := &TestActor{}
-	object, err := SpawnFromInstance(ta, OptDefault.WithPrefix("test-actor"))
+	object, err := SpawnFromProducer(
+		func () actor.Actor { return &TestActor{}},
+		OptDefault.WithPrefix("test-actor"))
+
 	a.Nil(err)
 	a.Contains(object.String(), "test-actor")
 

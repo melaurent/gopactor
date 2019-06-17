@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/meamidos/gopactor/options"
+	"github.com/melaurent/gopactor/options"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestShouldReceive(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
 	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
 
@@ -21,15 +22,15 @@ func TestShouldReceive(t *testing.T) {
 	a.Contains(ShouldReceive(receiver, "Welcome"), "Timeout")
 
 	// Failure: Message mismatch
-	receiver.Tell("Hello, world!")
+	ctx.Send(receiver, "Hello, world!")
 	a.Contains(ShouldReceive(receiver, "Welcome"), "do not match")
 
 	// Success: Massage match
-	receiver.Tell("Hello, world!")
+	ctx.Send(receiver,"Hello, world!")
 	a.Empty(ShouldReceive(receiver, "Hello, world!"))
 
 	// Success: Any message
-	receiver.Tell("Hello, world!")
+	ctx.Send(receiver,"Hello, world!")
 	a.Empty(ShouldReceive(receiver, nil))
 
 	// Cleanup
@@ -38,6 +39,7 @@ func TestShouldReceive(t *testing.T) {
 
 func TestShouldReceiveSomething(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
 	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
 
@@ -48,7 +50,7 @@ func TestShouldReceiveSomething(t *testing.T) {
 	a.Contains(ShouldReceiveSomething(receiver), "Timeout")
 
 	// Success: Any message
-	receiver.Tell("Hello, world!")
+	ctx.Send(receiver, "Hello, world!")
 	a.Empty(ShouldReceiveSomething(receiver))
 
 	// Cleanup
@@ -57,6 +59,7 @@ func TestShouldReceiveSomething(t *testing.T) {
 
 func TestShouldReceiveFrom(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
 	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
 	teller, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("tel"))
@@ -74,23 +77,23 @@ func TestShouldReceiveFrom(t *testing.T) {
 	// When tell is used the receiver does not know who is the sender
 	// NB: This protoactor behaviour might change in the future.
 	// teller.Tell("ping")
-	receiver.Tell("from teller")
+	ctx.Send(receiver, "from teller")
 	a.Contains(ShouldReceiveFrom(receiver, teller, "from teller"), "Sender is unknown")
 
 	// Failure: Message mismatch
-	receiver.Request("from requestor", requestor)
+	ctx.RequestWithCustomSender(receiver, "from requestor", requestor)
 	a.Contains(ShouldReceiveFrom(receiver, requestor, "from teller"), "Messages do not match")
 
 	// Failure: Sender mismatch
-	receiver.Request("from requestor", requestor)
+	ctx.RequestWithCustomSender(receiver, "from requestor", requestor)
 	a.Contains(ShouldReceiveFrom(receiver, teller, "from requestor"), "Sender does not match")
 
 	// Success: everything matches
-	receiver.Request("from requestor", requestor)
+	ctx.RequestWithCustomSender(receiver, "from requestor", requestor)
 	a.Empty(ShouldReceiveFrom(receiver, requestor, "from requestor"))
 
 	// Success: any message
-	receiver.Request("from requestor", requestor)
+	ctx.RequestWithCustomSender(receiver, "from requestor", requestor)
 	a.Empty(ShouldReceiveFrom(receiver, requestor, nil))
 
 	// Cleanup
@@ -99,6 +102,7 @@ func TestShouldReceiveFrom(t *testing.T) {
 
 func TestShouldReceiveN(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
 	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
 
@@ -112,17 +116,18 @@ func TestShouldReceiveN(t *testing.T) {
 	a.Contains(ShouldReceiveN(receiver, 1), "got 0")
 
 	// Failure: Not enough messages received
-	receiver.Tell("Something")
+
+	ctx.Send(receiver, "Something")
 	a.Contains(ShouldReceiveN(receiver, 2), "got 1")
 
 	// Success: One message
-	receiver.Tell("Something")
+	ctx.Send(receiver, "Something")
 	a.Empty(ShouldReceiveN(receiver, 1))
 
 	// Success: Many messages
 	many := 30
 	for i := 0; i < many; i++ {
-		receiver.Tell(i)
+		ctx.Send(receiver, i)
 	}
 	a.Empty(ShouldReceiveN(receiver, many))
 
@@ -132,13 +137,14 @@ func TestShouldReceiveN(t *testing.T) {
 
 func TestShouldSend(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
-	receiver, _ := actor.SpawnPrefix(actor.FromFunc(func(ctx actor.Context) {}), "rcv")
+	receiver := ctx.SpawnPrefix(actor.PropsFromFunc(func(ctx actor.Context) {}), "rcv")
 	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
-				ctx.Tell(receiver, "tell from sender")
+				ctx.Send(receiver, "tell from sender")
 			} else if m == "request" {
 				ctx.Request(receiver, "request from sender")
 			}
@@ -153,23 +159,23 @@ func TestShouldSend(t *testing.T) {
 	a.Contains(ShouldSend(sender, "from sender"), "Timeout")
 
 	// Failure: Message mismatch
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Contains(ShouldSend(sender, "foobar"), "do not match")
 
 	// Success: Tell: Massage match
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Empty(ShouldSend(sender, "tell from sender"))
 
 	// Success: Tell: Any message
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Empty(ShouldSend(sender, nil))
 
 	// Success: Request: Massage match
-	sender.Tell("request")
+	ctx.Send(sender, "request")
 	a.Empty(ShouldSend(sender, "request from sender"))
 
 	// Success: Request: Any message
-	sender.Tell("request")
+	ctx.Send(sender, "request")
 	a.Empty(ShouldSend(sender, nil))
 
 	// Cleanup
@@ -178,13 +184,14 @@ func TestShouldSend(t *testing.T) {
 
 func TestShouldSendTo(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
-	receiver, _ := actor.SpawnPrefix(actor.FromFunc(func(ctx actor.Context) {}), "rcv")
+	receiver := ctx.SpawnPrefix(actor.PropsFromFunc(func(ctx actor.Context) {}), "rcv")
 	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
-				ctx.Tell(receiver, "tell from sender")
+				ctx.Send(receiver, "tell from sender")
 			} else if m == "request" {
 				ctx.Request(receiver, "request from sender")
 			}
@@ -201,27 +208,27 @@ func TestShouldSendTo(t *testing.T) {
 	a.Contains(ShouldSendTo(sender, receiver, "from sender"), "Timeout")
 
 	// Failure: Message mismatch
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Contains(ShouldSendTo(sender, receiver, "foobar"), "do not match")
 
 	// Failure: Receiver mismatch
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Contains(ShouldSendTo(sender, sender, "tell from sender"), "Receiver does not match")
 
 	// Success: Tell: Massage match
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Empty(ShouldSendTo(sender, receiver, "tell from sender"))
 
 	// Success: Tell: Any message
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Empty(ShouldSendTo(sender, receiver, nil))
 
 	// Success: Request: Massage match
-	sender.Tell("request")
+	ctx.Send(sender, "request")
 	a.Empty(ShouldSendTo(sender, receiver, "request from sender"))
 
 	// Success: Request: Any message
-	sender.Tell("request")
+	ctx.Send(sender, "request")
 	a.Empty(ShouldSendTo(sender, receiver, nil))
 
 	// Cleanup
@@ -230,13 +237,14 @@ func TestShouldSendTo(t *testing.T) {
 
 func TestShouldSendSomething(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
-	receiver, _ := actor.SpawnPrefix(actor.FromFunc(func(ctx actor.Context) {}), "rcv")
+	receiver := ctx.SpawnPrefix(actor.PropsFromFunc(func(ctx actor.Context) {}), "rcv")
 	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
-				ctx.Tell(receiver, "tell from sender")
+				ctx.Send(receiver, "tell from sender")
 			} else if m == "request" {
 				ctx.Request(receiver, "request from sender")
 			}
@@ -250,11 +258,11 @@ func TestShouldSendSomething(t *testing.T) {
 	a.Contains(ShouldSendSomething(sender), "Timeout")
 
 	// Success: Tell: Any message
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Empty(ShouldSendSomething(sender))
 
 	// Success: Request: Any message
-	sender.Tell("request")
+	ctx.Send(sender, "request")
 	a.Empty(ShouldSendSomething(sender))
 
 	// Cleanup
@@ -263,13 +271,14 @@ func TestShouldSendSomething(t *testing.T) {
 
 func TestShouldSendN(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
-	receiver, _ := actor.SpawnPrefix(actor.FromFunc(func(ctx actor.Context) {}), "rcv")
+	receiver := ctx.SpawnPrefix(actor.PropsFromFunc(func(ctx actor.Context) {}), "rcv")
 	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
-				ctx.Tell(receiver, "tell from sender")
+				ctx.Send(receiver, "tell from sender")
 			} else if m == "request" {
 				ctx.Request(receiver, "request from sender")
 			}
@@ -286,21 +295,21 @@ func TestShouldSendN(t *testing.T) {
 	a.Contains(ShouldSendN(sender, 1), "got 0")
 
 	// Failure: Tell: Not sending enough
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Contains(ShouldSendN(sender, 2), "got 1")
 
 	// Success: Tell: one message
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Empty(ShouldSendN(sender, 1))
 
 	// Success: Request: one message
-	sender.Tell("request")
+	ctx.Send(sender, "request")
 	a.Empty(ShouldSendN(sender, 1))
 
 	// Success: Many messages
 	many := 30
 	for i := 0; i < many; i++ {
-		sender.Tell("tell")
+		ctx.Send(sender, "tell")
 	}
 	a.Empty(ShouldSendN(sender, many))
 
@@ -310,13 +319,14 @@ func TestShouldSendN(t *testing.T) {
 
 func TestShouldNotSendOrReceive(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
 	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptDefault.WithPrefix("rcv"))
 	sender, _ := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
 			if m == "tell" {
-				ctx.Tell(receiver, "tell from sender")
+				ctx.Send(receiver, "tell from sender")
 			} else if m == "request" {
 				ctx.Request(receiver, "request from sender")
 			}
@@ -330,15 +340,15 @@ func TestShouldNotSendOrReceive(t *testing.T) {
 	a.Empty(ShouldNotSendOrReceive(sender))
 
 	// Failure: receive
-	receiver.Tell("foobar")
+	ctx.Send(receiver, "foobar")
 	a.Contains(ShouldNotSendOrReceive(receiver), "Got inbound message")
 
 	// Failure: tell
-	sender.Tell("tell")
+	ctx.Send(sender, "tell")
 	a.Contains(ShouldNotSendOrReceive(sender), "Got outbound message")
 
 	// Failure: request
-	sender.Tell("request")
+	ctx.Send(sender, "request")
 	a.Contains(ShouldNotSendOrReceive(sender), "Got outbound message")
 
 	// Cleanup
@@ -381,6 +391,7 @@ func TestShouldStop(t *testing.T) {
 
 func TestShouldBeRestarting(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
 	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
@@ -398,7 +409,7 @@ func TestShouldBeRestarting(t *testing.T) {
 	a.Contains(ShouldBeRestarting(receiver), "Timeout")
 
 	// Success
-	receiver.Tell("panic")
+	ctx.Send(receiver, "panic")
 	a.Empty(ShouldBeRestarting(receiver))
 	a.Empty(ShouldStart(receiver))
 
@@ -409,7 +420,7 @@ func TestShouldBeRestarting(t *testing.T) {
 func TestShouldObserveTermination(t *testing.T) {
 	a := assert.New(t)
 
-	childProps := actor.FromFunc(func(ctx actor.Context) {})
+	childProps := actor.PropsFromFunc(func(ctx actor.Context) {})
 
 	getParentChildSet := func() (*actor.PID, *actor.PID) {
 		var child *actor.PID
@@ -457,9 +468,10 @@ func TestShouldObserveTermination(t *testing.T) {
 
 func TestShouldSpawn(t *testing.T) {
 	a := assert.New(t)
+	ctx := actor.EmptyRootContext
 
 	receiver, _ := SpawnFromFunc(func(ctx actor.Context) {}, OptNoInterception.WithPrefix("rcv"))
-	childProps := actor.FromFunc(func(ctx actor.Context) {})
+	childProps := actor.PropsFromFunc(func(ctx actor.Context) {})
 	parent, _ := SpawnFromFunc(func(ctx actor.Context) {
 		switch m := ctx.Message().(type) {
 		case string:
@@ -478,15 +490,15 @@ func TestShouldSpawn(t *testing.T) {
 	a.Contains(ShouldSpawn(parent), "Timeout")
 
 	// Failure: child PID mismatch
-	parent.Request("spawn", receiver)
+	ctx.RequestWithCustomSender(parent, "spawn", receiver)
 	a.Contains(ShouldSpawn(parent, "foobar"), "does not match")
 
 	// Success: child PID match
-	parent.Request("spawn", receiver)
+	ctx.RequestWithCustomSender(parent, "spawn", receiver)
 	a.Empty(ShouldSpawn(parent, "my-dear-dummy"))
 
 	// Success: any child PID is ok
-	parent.Request("spawn", receiver)
+	ctx.RequestWithCustomSender(parent, "spawn", receiver)
 	a.Empty(ShouldSpawn(parent))
 
 	// Cleanup

@@ -23,7 +23,9 @@ func NewContext(catcher *Catcher, ctx actor.Context) *Context {
 func (ctx *Context) Spawn(props *actor.Props) *actor.PID {
 	catcher := ctx.catcher
 	if catcher.Options.DummySpawningEnabled {
-		props = actor.FromInstance(&NullReceiver{})
+		props = actor.PropsFromProducer(func () actor.Actor {
+			return &NullReceiver{}
+		})
 	}
 
 	pid := ctx.Context.Spawn(props)
@@ -37,7 +39,9 @@ func (ctx *Context) Spawn(props *actor.Props) *actor.PID {
 func (ctx *Context) SpawnPrefix(props *actor.Props, prefix string) *actor.PID {
 	catcher := ctx.catcher
 	if catcher.Options.DummySpawningEnabled {
-		props = actor.FromInstance(&NullReceiver{})
+		props = actor.PropsFromProducer(func () actor.Actor {
+			return &NullReceiver{}
+		})
 	}
 
 	pid := ctx.Context.SpawnPrefix(props, prefix)
@@ -51,7 +55,9 @@ func (ctx *Context) SpawnPrefix(props *actor.Props, prefix string) *actor.PID {
 func (ctx *Context) SpawnNamed(props *actor.Props, id string) (*actor.PID, error) {
 	catcher := ctx.catcher
 	if catcher.Options.DummySpawningEnabled {
-		props = actor.FromInstance(&NullReceiver{})
+		props = actor.PropsFromProducer(func () actor.Actor {
+			return &NullReceiver{}
+		})
 	}
 
 	pid, err := ctx.Context.SpawnNamed(props, id)

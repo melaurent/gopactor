@@ -4,28 +4,28 @@ import (
 	"github.com/AsynkronIT/protoactor-go/actor"
 )
 
-func (catcher *Catcher) inboundMiddleware(next actor.ActorFunc) actor.ActorFunc {
-	return func(ctx actor.Context) {
-		catcher.processInboundMessage(ctx)
-
-		// Swap the context with a thin wrapper which intercepts some calls.
-		if _, ok := ctx.(*Context); !ok {
-			ctx = NewContext(catcher, ctx)
-		}
-		next(ctx)
+func (catcher *Catcher) contextDecorator(next actor.ContextDecoratorFunc) actor.ContextDecoratorFunc {
+	return func(ctx actor.Context) actor.Context {
+		catcherCtx := NewContext(catcher, ctx)
+		return next(catcherCtx)
 	}
 }
 
-func (catcher *Catcher) processInboundMessage(ctx actor.Context) {
-	message := ctx.Message()
+func (catcher *Catcher) inboundMiddleware(next actor.ReceiverFunc) actor.ReceiverFunc {
+	return func(ctx actor.ReceiverContext, envelope *actor.MessageEnvelope) {
+		catcher.processInboundMessage(ctx, envelope)
+		next(ctx, envelope)
+	}
+}
 
+func (catcher *Catcher) processInboundMessage(ctx actor.ReceiverContext, mEnvelope *actor.MessageEnvelope) {
 	envelope := &Envelope{
-		Sender:  ctx.Sender(),
+		Sender:  mEnvelope.Sender,
 		Target:  ctx.Self(),
-		Message: message,
+		Message: mEnvelope.Message,
 	}
 
-	if !isSystemMessage(message) {
+	if !isSystemMessage(mEnvelope.Message) {
 		if catcher.Options.InboundInterceptionEnabled {
 			catcher.ChUserInbound <- envelope
 		}
@@ -41,13 +41,13 @@ func (catcher *Catcher) processSystemMessage(envelope *Envelope) {
 }
 
 func (catcher *Catcher) outboundMiddleware(next actor.SenderFunc) actor.SenderFunc {
-	return func(ctx actor.Context, target *actor.PID, env actor.MessageEnvelope) {
+	return func(ctx actor.SenderContext, target *actor.PID, env *actor.MessageEnvelope) {
 		catcher.processOutboundMessage(ctx, target, env)
 		next(ctx, target, env)
 	}
 }
 
-func (catcher *Catcher) processOutboundMessage(ctx actor.Context, target *actor.PID, env actor.MessageEnvelope) {
+func (catcher *Catcher) processOutboundMessage(ctx actor.SenderContext, target *actor.PID, env *actor.MessageEnvelope) {
 	// TODO: Is there a difference between using ctx.Message() and env.Message?
 	message := env.Message
 

@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/meamidos/gopactor/catcher"
-	"github.com/meamidos/gopactor/options"
+	"github.com/melaurent/gopactor/catcher"
+	"github.com/melaurent/gopactor/options"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

@@ -2,16 +2,9 @@ package gopactor
 
 import (
 	"github.com/AsynkronIT/protoactor-go/actor"
-	"github.com/meamidos/gopactor/gopactor"
-	"github.com/meamidos/gopactor/options"
+	"github.com/melaurent/gopactor/gopactor"
+	"github.com/melaurent/gopactor/options"
 )
-
-// Analog of Protoactor's actor.SpawnPrefix(actor.FromInstance(...))
-// The main difference is that after spawning with Gopactor
-// you can write assertions for the spawned actor.
-func SpawnFromInstance(obj actor.Actor, opts ...options.Options) (*actor.PID, error) {
-	return gopactor.DEFAULT_GOPACTOR.SpawnFromInstance(obj, opts...)
-}
 
 // Analog of Protoactor's actor.SpawnPrefix(actor.FromProducer(...))
 func SpawnFromProducer(producer actor.Producer, opts ...options.Options) (*actor.PID, error) {
