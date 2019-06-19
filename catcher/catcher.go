@@ -7,6 +7,7 @@ import (
 
 	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/melaurent/gopactor/options"
+	"reflect"
 )
 
 // Envelope is a wrapper that is used for all intercepted messages
@@ -95,6 +96,15 @@ func (catcher *Catcher) ShouldReceive(sender *actor.PID, msg interface{}) string
 	}
 }
 
+func (catcher *Catcher) ShouldReceiveType(sender *actor.PID, msgType reflect.Type) string {
+	select {
+	case envelope := <-catcher.ChUserInbound:
+		return assertInboundMessageType(envelope, msgType, sender)
+	case <-time.After(catcher.Options.Timeout):
+		return fmt.Sprintf("Timeout %s while waiting for a message", catcher.Options.Timeout)
+	}
+}
+
 func (catcher *Catcher) ShouldReceiveSysMsg(msg interface{}) string {
 	for {
 		select {
@@ -124,6 +134,15 @@ func (catcher *Catcher) ShouldSend(receiver *actor.PID, msg interface{}) string 
 		} else {
 			return assertOutboundMessage(envelope, msg, receiver)
 		}
+	case <-time.After(catcher.Options.Timeout):
+		return fmt.Sprintf("Timeout %s while waiting for sending", catcher.Options.Timeout)
+	}
+}
+
+func (catcher *Catcher) ShouldSendType(receiver *actor.PID, msgType reflect.Type) string {
+	select {
+	case envelope := <-catcher.ChUserOutbound:
+		return assertOutboundMessageType(envelope, msgType, receiver)
 	case <-time.After(catcher.Options.Timeout):
 		return fmt.Sprintf("Timeout %s while waiting for sending", catcher.Options.Timeout)
 	}

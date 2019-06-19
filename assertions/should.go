@@ -13,6 +13,13 @@ func ShouldReceive(actual interface{}, expected ...interface{}) string {
 	return gopactor.DEFAULT_GOPACTOR.ShouldReceive(actual, expected...)
 }
 
+// ShouldReceiveType asserts that a given message type is received by the actor
+// and it does not matter who is the sender:
+//   So(myActor, ShouldReceive, "ping")
+func ShouldReceiveType(actual interface{}, expected ...interface{}) string {
+	return gopactor.DEFAULT_GOPACTOR.ShouldReceiveType(actual, expected...)
+}
+
 // ShouldReceiveFrom asserts that a given message is received by the actor
 // and it is received from a certain sender:
 //   So(myActor, ShouldReceiveFrom, sender, "ping")
@@ -41,6 +48,13 @@ func ShouldReceiveN(actual interface{}, params ...interface{}) string {
 //   So(myActor, ShouldSend, "ping")
 func ShouldSend(actual interface{}, expected ...interface{}) string {
 	return gopactor.DEFAULT_GOPACTOR.ShouldSend(actual, expected...)
+}
+
+// ShouldSendType asserts that a given message is sent by the actor
+// and it does not matter who is the receiver:
+//   So(myActor, ShouldSend, "ping")
+func ShouldSendType(actual interface{}, expected ...interface{}) string {
+	return gopactor.DEFAULT_GOPACTOR.ShouldSendType(actual, expected...)
 }
 
 // ShouldSendTo asserts that a given message is sent by the actor

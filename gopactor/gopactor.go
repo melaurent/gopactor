@@ -3,6 +3,7 @@ package gopactor
 import (
 	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/melaurent/gopactor/catcher"
+	"reflect"
 )
 
 // Gopactor represents a group catchers.
@@ -37,6 +38,15 @@ func (p *Gopactor) shouldReceive(receiver, sender *actor.PID, msg interface{}) s
 	return catcher.ShouldReceive(sender, msg)
 }
 
+func (p *Gopactor) shouldReceiveType(receiver, sender *actor.PID, msgType reflect.Type) string {
+	catcher := p.getCatcherByPID(receiver)
+	if catcher == nil {
+		return "Receiver is not registered in Gopactor"
+	}
+
+	return catcher.ShouldReceiveType(sender, msgType)
+}
+
 func (p *Gopactor) shouldReceiveSysMsg(receiver *actor.PID, msg interface{}) string {
 	catcher := p.getCatcherByPID(receiver)
 	if catcher == nil {
@@ -69,6 +79,15 @@ func (p *Gopactor) shouldSend(sender, receiver *actor.PID, msg interface{}) stri
 	}
 
 	return catcher.ShouldSend(receiver, msg)
+}
+
+func (p *Gopactor) shouldSendType(sender, receiver *actor.PID, msgType reflect.Type) string {
+	catcher := p.getCatcherByPID(sender)
+	if catcher == nil {
+		return "Sender is not registered in Gopactor"
+	}
+
+	return catcher.ShouldSendType(receiver, msgType)
 }
 
 func (p *Gopactor) shouldNotSendOrReceive(pid *actor.PID) string {

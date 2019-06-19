@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/AsynkronIT/protoactor-go/actor"
+	"reflect"
 )
 
 // ShouldReceive is an assertion method. Its rules are:
@@ -45,6 +46,24 @@ func (p *Gopactor) ShouldReceiveFrom(param1 interface{}, params ...interface{}) 
 	expectedMsg := params[1]
 
 	return p.shouldReceive(receiver, sender, expectedMsg)
+}
+
+// ShouldReceiveType is an assertion method. Its rules are:
+// - The receiver should receive a given message type.
+// - It does not matter who is the sender.
+func (p *Gopactor) ShouldReceiveType(param1 interface{}, params ...interface{}) string {
+	receiver, ok := param1.(*actor.PID)
+	if !ok {
+		return "Receiver is not an actor PID"
+	}
+
+	if len(params) != 1 {
+		return "One parameter with a message is required to assert receiving"
+	}
+
+	expectedMsgType := params[0].(reflect.Type)
+
+	return p.shouldReceiveType(receiver, nil, expectedMsgType)
 }
 
 // ShouldReceiveSomething is an assertion method. Its rules are:
@@ -157,6 +176,25 @@ func (p *Gopactor) ShouldSend(param1 interface{}, params ...interface{}) string 
 	expectedMsg := params[0]
 
 	return p.shouldSend(sender, nil, expectedMsg)
+}
+
+// ShouldSendType is an assertion method. Its rules are:
+// - The sender should send one given message type.
+// - It does not matter who is the receiver of the message.
+func (p *Gopactor) ShouldSendType(param1 interface{}, params ...interface{}) string {
+	sender, ok := param1.(*actor.PID)
+	if !ok {
+		return "Sender is not an actor PID"
+	}
+
+	// If there is only one argument than it's the message to assert
+	if len(params) != 1 {
+		return "One parameter with a message is required to assert sending"
+	}
+
+	expectedMsgType := params[0].(reflect.Type)
+
+	return p.shouldSendType(sender, nil, expectedMsgType)
 }
 
 // ShouldSendTo is an assertion method. Its rules are:
